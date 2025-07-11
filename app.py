@@ -7,6 +7,8 @@ def cargar_datos():
     return pd.read_csv("productos_chatbot_final.csv")
 
 df = cargar_datos()
+st.write("✅ Datos cargados:")
+st.write(df.head())
 
 # --- Inicializar variables en session_state ---
 if "tipo_piel" not in st.session_state:

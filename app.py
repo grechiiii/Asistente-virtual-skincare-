@@ -1,279 +1,194 @@
-
-# --- Sección: Importaciones necesarias ---
+import streamlit as st
 import pandas as pd
 
-# --- Sección: Carga de datos ---
-df = pd.read_csv("productos_chatbot_final.csv")
+# --- Cargar los datos ---
+@st.cache_data
+def cargar_datos():
+    return pd.read_csv("productos_chatbot_final.csv")
 
-# --- Sección: Variables globales ---
-tipo_piel_usuario = None
-edad_usuario = None
+df = cargar_datos()
 
-# --- Sección: Función de menú principal ---
-def mostrar_menu(nombre):
-    print(f"\n🌟 Bienvenido/a, {nombre}, a tu asistente de skincare 🌟")
-    print("Elige una opción:")
-    print("1. ¿Qué tipo de piel tengo? (Test)")
-    print("2. Quiero saber más de mi tipo de piel")
-    print("3. ¿Cómo armo mi rutina de skincare según mi tipo de piel?")
-    print("4. ¿Qué productos me recomiendas?")
-    print("5. Problemas comunes según tu tipo de piel")
-    print("6. Consejos para el cuidado de piel según tu tipo de piel")
-    print("7. Ingredientes que deberías conocer")
-    print("8. Mitos comunes del skincare")
-    print("9. No sé... ¡Ayuda!")
-    print("10. Salir")
+# --- Inicializar variables en session_state ---
+if "tipo_piel" not in st.session_state:
+    st.session_state.tipo_piel = None
+if "edad_usuario" not in st.session_state:
+    st.session_state.edad_usuario = None
+if "nombre_usuario" not in st.session_state:
+    st.session_state.nombre_usuario = None
 
-# --- Sección: Test para determinar tipo de piel ---
-def test_tipo_piel():
-    global tipo_piel_usuario, edad_usuario
-    print("\n🧪 TEST: ¿Qué tipo de piel tienes?")
-    print("Contesta cada pregunta marcando a, b, c o d según lo que más se parezca a ti.")
+# --- Título ---
+st.title("🧴 Asistente Virtual de Skincare")
 
-    preguntas = [
-        {
-            "pregunta": "1. ¿Cómo luce tu piel al natural?",
-            "opciones": {
-                "a": "Lisa y con brillo natural, no oleosa.",
-                "b": "Algo opaca y seca.",
-                "c": "Me brilla toda la cara.",
-                "d": "Algunas zonas están brillosas y otras secas."
-            }
-        },
-        {
-            "pregunta": "2. ¿Cómo son tus poros?",
-            "opciones": {
-                "a": "Finos y poco visibles.",
-                "b": "Casi imperceptibles.",
-                "c": "Grandes y visibles en todo el rostro.",
-                "d": "Grandes solo en la frente, nariz y mentón."
-            }
-        },
-        {
-            "pregunta": "3. Al tocar tu piel, ¿cómo se siente?",
-            "opciones": {
-                "a": "Suave y lisa.",
-                "b": "Áspera, a veces descamada.",
-                "c": "Gruesa, con granitos.",
-                "d": "Una mezcla de seca y grasa según la zona."
-            }
-        },
-        {
-            "pregunta": "4. ¿Cómo se comporta tu piel durante el día?",
-            "opciones": {
-                "a": "Brilla ligeramente al final del día.",
-                "b": "Se mantiene opaca casi todo el día.",
-                "c": "Brilla mucho todo el día.",
-                "d": "Brilla en la zona T, pero no en las mejillas."
-            }
-        },
-        {
-            "pregunta": "5. ¿Sueles tener granitos o puntos negros?",
-            "opciones": {
-                "a": "Muy pocos o ninguno.",
-                "b": "Raramente o nunca.",
-                "c": "Frecuentemente.",
-                "d": "Algunas veces, según la zona."
-            }
-        },
-        {
-            "pregunta": "6. Para tu edad, ¿cómo ves tu piel?",
-            "opciones": {
-                "a": "Normal, sin muchas imperfecciones.",
-                "b": "Arrugas marcadas, se siente tirante.",
-                "c": "Pocas arrugas, pero piel grasa.",
-                "d": "Algunas líneas finas y zonas mixtas."
-            }
-        }
-    ]
+# --- Nombre del usuario ---
+nombre = st.text_input("¿Cómo te llamas?")
+if nombre:
+    st.session_state.nombre_usuario = nombre
 
-    puntajes = {"a": 0, "b": 0, "c": 0, "d": 0}
-    tipo_piel = {
-        "a": "NORMAL",
-        "b": "SECA",
-        "c": "GRASA",
-        "d": "MIXTA"
-    }
+if st.session_state.nombre_usuario:
+    st.header(f"🌟 Bienvenida/o, {st.session_state.nombre_usuario}")
 
-    for q in preguntas:
-        print(f"\n{q['pregunta']}")
-        for letra, texto in q['opciones'].items():
-            print(f"  {letra}) {texto}")
-        while True:
-            r = input("Elige a, b, c o d: ").lower()
-            if r in ["a", "b", "c", "d"]:
-                puntajes[r] += 1
-                break
-            else:
-                print("❌ Entrada inválida. Por favor escribe a, b, c o d.")
+    opcion = st.selectbox(
+        "Elige una opción:",
+        [
+            "Selecciona una opción",
+            "1. ¿Qué tipo de piel tengo? (Test)",
+            "2. Saber más de mi tipo de piel",
+            "3. Armar mi rutina de skincare",
+            "4. Productos recomendados",
+            "5. Problemas comunes",
+            "6. Consejos de cuidado",
+            "7. Ingredientes importantes",
+            "8. Mitos del skincare",
+            "9. Ayuda general"
+        ]
+    )
 
-    resultado = max(puntajes, key=puntajes.get)
-    tipo_piel_usuario = tipo_piel[resultado]
+    # --- Opción 1: Test de tipo de piel ---
+    if opcion == "1. ¿Qué tipo de piel tengo? (Test)":
+        st.subheader("🧪 TEST: ¿Qué tipo de piel tienes?")
 
-    # Guardar edad
-    while True:
-        try:
-            edad = int(input("\n🎂 ¿Cuántos años tienes?: "))
+        preguntas = [
+            ("¿Cómo luce tu piel al natural?", ["Lisa y con brillo natural, no oleosa.", "Algo opaca y seca.", "Me brilla toda la cara.", "Algunas zonas brillan y otras están secas."]),
+            ("¿Cómo son tus poros?", ["Finos y poco visibles.", "Casi imperceptibles.", "Grandes y visibles en todo el rostro.", "Grandes solo en la frente, nariz y mentón."]),
+            ("¿Cómo se siente tu piel al tacto?", ["Suave y lisa.", "Áspera o descamada.", "Gruesa, con granitos.", "Una mezcla de seca y grasa."]),
+            ("¿Cómo se comporta tu piel durante el día?", ["Brilla ligeramente al final del día.", "Se mantiene opaca casi todo el día.", "Brilla mucho todo el día.", "Brilla en la zona T, pero no en mejillas."]),
+            ("¿Tienes granitos o puntos negros?", ["Muy pocos o ninguno.", "Raramente o nunca.", "Frecuentemente.", "Algunas veces, según la zona."]),
+            ("¿Cómo ves tu piel según tu edad?", ["Normal, sin muchas imperfecciones.", "Arrugas marcadas, se siente tirante.", "Piel grasa, pocas arrugas.", "Líneas finas y zonas mixtas."])
+        ]
+
+        opciones = []
+        for idx, (pregunta, respuestas) in enumerate(preguntas):
+            respuesta = st.radio(pregunta, respuestas, key=f"preg_{idx}")
+            opciones.append(respuesta)
+
+        if st.button("Ver mi tipo de piel"):
+            conteo = {"a": 0, "b": 0, "c": 0, "d": 0}
+            for r in opciones:
+                if "Lisa" in r or "Finos" in r or "Suave" in r or "Brilla ligeramente" in r or "Muy pocos" in r or "Normal" in r:
+                    conteo["a"] += 1
+                elif "seca" in r or "imperceptibles" in r or "Áspera" in r or "opaca" in r or "Raramente" in r or "Arrugas" in r:
+                    conteo["b"] += 1
+                elif "brilla toda la cara" in r or "Grandes y visibles" in r or "granitos" in r or "mucho todo el día" in r or "Frecuentemente" in r or "Piel grasa" in r:
+                    conteo["c"] += 1
+                else:
+                    conteo["d"] += 1
+
+            resultado = max(conteo, key=conteo.get)
+            tipo_map = {"a": "NORMAL", "b": "SECA", "c": "GRASA", "d": "MIXTA"}
+            st.session_state.tipo_piel = tipo_map[resultado]
+
+            edad = st.number_input("🎂 ¿Cuántos años tienes?", min_value=0, max_value=120, step=1)
             if edad < 13:
-                print("⚠️ Esta app está diseñada para mayores de 13 años.")
-                return
+                st.warning("Esta app está pensada para mayores de 13 años.")
             elif edad <= 18:
-                edad_usuario = "adolescente"
+                st.session_state.edad_usuario = "adolescente"
             elif edad <= 59:
-                edad_usuario = "adulto"
+                st.session_state.edad_usuario = "adulto"
             else:
-                edad_usuario = "adulto mayor"
-            break
-        except ValueError:
-            print("❌ Por favor, ingresa un número válido.")
+                st.session_state.edad_usuario = "adulto mayor"
 
-    print("\n🔍 Resultado del test:")
-    print(f"✅ Según tus respuestas, tu tipo de piel es: **{tipo_piel_usuario}**.")
-    input("Presiona Enter para volver al menú.")
+            st.success(f"✅ Tu tipo de piel es: {st.session_state.tipo_piel}")
 
-# --- Sección: Información extendida ---
-info_piel = {
-    "NORMAL": "Piel equilibrada: poros finos, textura suave y saludable.",
-    "SECA": "Produce poco sebo, se siente tirante y puede descamarse. Necesita hidratación intensa.",
-    "GRASA": "Produce mucho sebo, suele tener brillo y tendencia al acné. Usa productos oil-free.",
-    "MIXTA": "Zona T grasa y mejillas secas. Requiere productos diferentes según la zona.",
-    "SENSIBLE": "Se irrita fácilmente. Evita fragancias, alcohol y prefiere productos suaves."
-}
-
-def info_según_resultado(tipo):
-    print(f"\n📘 Más sobre tu tipo de piel ({tipo}):")
-    print(info_piel.get(tipo, "No se encontró información para este tipo."))
-    input("\nPresiona Enter para volver al menú.")
-
-def rutina_por_tipo(tipo):
-    print("\n🧴 Rutina básica según tu tipo de piel:")
-    rutinas = {
-        "SECA": "Limpieza suave, serum hidratante, crema nutritiva, protector solar.",
-        "GRASA": "Gel limpiador, tónico equilibrante, hidratante ligera, protector solar matificante.",
-        "MIXTA": "Productos ligeros en zona T, hidratación en mejillas.",
-        "SENSIBLE": "Productos sin fragancia, calmantes como aloe y manzanilla, protector solar mineral.",
-        "NORMAL": "Limpieza equilibrada, hidratación ligera, protector solar."
-    }
-    print(rutinas.get(tipo, "No hay rutina definida para este tipo de piel."))
-    input("Presiona Enter para volver al menú.")
-
-def recomendar_productos():
-    global tipo_piel_usuario, edad_usuario
-    if not tipo_piel_usuario or not edad_usuario:
-        print("\n⚠️ Para recibir recomendaciones completas, primero realiza el test.")
-        input("Presiona Enter para volver al menú.")
-        return
-
-    necesidad = input("💡 ¿Qué necesitas? (acné, hidratación, manchas, arrugas, etc.): ").lower()
-
-    resultados = df[
-        df['tipo_piel'].str.lower().str.contains(tipo_piel_usuario.lower()) &
-        df['edad'].str.lower().str.contains(edad_usuario.lower()) &
-        df['necesidades'].str.lower().str.contains(necesidad)
-    ]
-
-    if not resultados.empty:
-        print("\n🔍 Recomendaciones:\n")
-        for i, row in resultados.iterrows():
-            print(f"🧴 Producto: {row['nombre']} ({row['marca']})")
-            print(f"💸 Precio: {row['precio']}")
-            print(f"🔗 Enlace: {row['enlace']}")
-            print("-" * 40)
-    else:
-        print("😕 No se encontraron productos con esas características.")
-    input("Presiona Enter para volver al menú.")
-
-def problemas_comunes(tipo):
-    print("\n📌 Problemas comunes según tipo de piel:")
-    info = {
-        "SECA": "resequedad, descamación, líneas finas.",
-        "GRASA": "acné, puntos negros, poros dilatados.",
-        "MIXTA": "desequilibrio en zonas, acné en zona T.",
-        "SENSIBLE": "enrojecimiento, irritación, alergias."
-    }
-    print(f"- {tipo}: {info.get(tipo, 'No disponible')}")
-    input("Presiona Enter para volver al menú.")
-
-def consejos_por_tipo():
-    print("\n🧠 Consejos según tipo de piel:")
-    print("- SECA: Usa limpiadores suaves, evita alcohol, aplica humectantes ricos.")
-    print("- GRASA: Evita aceites pesados, elige productos oil-free.")
-    print("- MIXTA: Usa productos diferentes en cada zona si es necesario.")
-    print("- SENSIBLE: Prioriza ingredientes calmantes, sin perfume.")
-    input("Presiona Enter para volver al menú.")
-
-def ingredientes_clave():
-    print("\n🧪 Ingredientes importantes:")
-    print("- Ácido hialurónico: Hidratación profunda.")
-    print("- Niacinamida: Control de grasa, mejora textura.")
-    print("- Retinol: Antiarrugas, renovación celular.")
-    print("- Vitamina C: Ilumina, reduce manchas.")
-    input("Presiona Enter para volver al menú.")
-
-def mitos_skincare():
-    print("\n🚫 Mitos comunes del skincare:")
-    print("❌ El limón aclara la piel – Puede causar quemaduras.")
-    print("❌ Si arde, es porque está funcionando – No, probablemente es irritante.")
-    print("❌ Solo las mujeres deben cuidarse la piel – ¡Todos debemos hacerlo!")
-    input("Presiona Enter para volver al menú.")
-
-def ayuda():
-    print("\n🆘 AYUDA GENERAL")
-    print("-" * 50)
-    print("¿No sabes por dónde empezar? ¡No te preocupes, te ayudo! 💖\n")
-    print("👉 Aquí tienes algunas sugerencias:")
-    print("1️⃣ Si no sabes tu tipo de piel, empieza por la opción 1: '¿Qué tipo de piel tengo?'.")
-    print("2️⃣ Luego puedes usar la opción 2 para aprender más sobre ese tipo de piel.")
-    print("3️⃣ Con eso claro, usa la opción 3 para armar tu rutina.")
-    print("4️⃣ ¿Quieres productos específicos? La opción 4 es para ti.")
-    print("5️⃣ ¿Te interesa aprender más? Explora las opciones 5 a 8.")
-    print("\n📌 Consejo: todo lo que elijas está pensado para ayudarte a conocerte y cuidarte mejor.")
-    print("🧴 Si tienes dudas reales sobre tu piel, lo mejor es consultar a un dermatólogo/a.")
-    input("\nPresiona Enter para volver al menú.")
-
-def chatbot():
-    print("👋 ¡Hola! Soy tu asistente virtual de skincare.")
-    nombre = input("¿Cómo te llamas? ")
-
-    while True:
-        mostrar_menu(nombre)
-        opcion = input("Escribe el número de la opción que quieres: ")
-
-        if opcion == "1":
-            test_tipo_piel()
-        elif opcion == "2":
-            if tipo_piel_usuario:
-                info_según_resultado(tipo_piel_usuario)
-            else:
-                print("\n📌 Aún no sabemos tu tipo de piel. Realiza el test (opción 1).")
-                input("Presiona Enter para volver al menú.")
-        elif opcion == "3":
-            if tipo_piel_usuario:
-                rutina_por_tipo(tipo_piel_usuario)
-            else:
-                print("\n📌 Aún no sabemos tu tipo de piel. Realiza el test (opción 1).")
-                input("Presiona Enter para volver al menú.")
-        elif opcion == "4":
-            recomendar_productos()
-        elif opcion == "5":
-            if tipo_piel_usuario:
-                problemas_comunes(tipo_piel_usuario)
-            else:
-                print("\n📌 No sabemos tu tipo de piel todavía. Haz primero el test (opción 1).")
-                input("Presiona Enter para volver al menú.")
-        elif opcion == "6":
-            consejos_por_tipo()
-        elif opcion == "7":
-            ingredientes_clave()
-        elif opcion == "8":
-            mitos_skincare()
-        elif opcion == "9":
-            ayuda()
-        elif opcion == "10":
-            print(f"\n👋 ¡Gracias por usar el asistente, {nombre}! Cuida tu piel 💖")
-            break
+    # --- Opción 2: Info extendida ---
+    elif opcion == "2. Saber más de mi tipo de piel":
+        info_piel = {
+            "NORMAL": "Piel equilibrada: poros finos, textura suave y saludable.",
+            "SECA": "Produce poco sebo, se siente tirante y puede descamarse. Necesita hidratación intensa.",
+            "GRASA": "Produce mucho sebo, suele tener brillo y tendencia al acné. Usa productos oil-free.",
+            "MIXTA": "Zona T grasa y mejillas secas. Requiere productos diferentes según la zona.",
+            "SENSIBLE": "Se irrita fácilmente. Evita fragancias, alcohol y prefiere productos suaves."
+        }
+        if st.session_state.tipo_piel:
+            st.info(info_piel.get(st.session_state.tipo_piel))
         else:
-            print("❌ Opción no válida. Intenta de nuevo.")
+            st.warning("Primero realiza el test para saber tu tipo de piel.")
 
-# Ejecutar chatbot
-chatbot()
+    # --- Opción 3: Rutina básica ---
+    elif opcion == "3. Armar mi rutina de skincare":
+        rutinas = {
+            "NORMAL": "Limpieza equilibrada, hidratación ligera, protector solar.",
+            "SECA": "Limpieza suave, serum hidratante, crema nutritiva, protector solar.",
+            "GRASA": "Gel limpiador, tónico equilibrante, hidratante ligera, protector solar matificante.",
+            "MIXTA": "Productos ligeros en zona T, hidratación en mejillas.",
+            "SENSIBLE": "Productos sin fragancia, calmantes como aloe y manzanilla, protector solar mineral."
+        }
+        if st.session_state.tipo_piel:
+            st.success(rutinas.get(st.session_state.tipo_piel))
+        else:
+            st.warning("Primero realiza el test para saber tu tipo de piel.")
+
+    # --- Opción 4: Recomendaciones de productos ---
+    elif opcion == "4. Productos recomendados":
+        if st.session_state.tipo_piel and st.session_state.edad_usuario:
+            necesidad = st.text_input("¿Qué necesitas? (acné, hidratación, manchas, etc.)")
+            if necesidad:
+                resultados = df[
+                    df["tipo_piel"].str.lower().str.contains(st.session_state.tipo_piel.lower()) &
+                    df["edad"].str.lower().str.contains(st.session_state.edad_usuario.lower()) &
+                    df["necesidades"].str.lower().str.contains(necesidad.lower())
+                ]
+                if not resultados.empty:
+                    for _, row in resultados.iterrows():
+                        st.markdown(f"### 🧴 {row['nombre']} ({row['marca']})")
+                        st.write(f"💸 **Precio:** {row['precio']}")
+                        st.write(f"[🔗 Enlace al producto]({row['enlace']})")
+                        st.markdown("---")
+                else:
+                    st.warning("No se encontraron productos con esas características.")
+        else:
+            st.warning("Primero completa el test para obtener recomendaciones.")
+
+    # --- Opción 5: Problemas comunes ---
+    elif opcion == "5. Problemas comunes":
+        problemas = {
+            "SECA": "Resequedad, descamación, líneas finas.",
+            "GRASA": "Acné, puntos negros, poros dilatados.",
+            "MIXTA": "Desequilibrio en zonas, acné en zona T.",
+            "SENSIBLE": "Enrojecimiento, irritación, alergias.",
+            "NORMAL": "Muy pocos problemas visibles, pero requiere cuidado básico."
+        }
+        if st.session_state.tipo_piel:
+            st.info(f"{st.session_state.tipo_piel}: {problemas.get(st.session_state.tipo_piel, 'Sin datos')}")
+        else:
+            st.warning("Realiza el test primero.")
+
+    # --- Opción 6: Consejos por tipo ---
+    elif opcion == "6. Consejos de cuidado":
+        st.markdown("""
+- **SECA**: Usa limpiadores suaves, evita alcohol, aplica humectantes ricos.
+- **GRASA**: Evita aceites pesados, elige productos oil-free.
+- **MIXTA**: Usa productos diferentes en cada zona si es necesario.
+- **SENSIBLE**: Prioriza ingredientes calmantes, sin perfume.
+- **NORMAL**: Mantén una rutina básica equilibrada.
+        """)
+
+    # --- Opción 7: Ingredientes clave ---
+    elif opcion == "7. Ingredientes importantes":
+        st.markdown("""
+- **Ácido hialurónico**: Hidratación profunda.
+- **Niacinamida**: Control de grasa, mejora textura.
+- **Retinol**: Antiarrugas, renovación celular.
+- **Vitamina C**: Ilumina, reduce manchas.
+        """)
+
+    # --- Opción 8: Mitos comunes ---
+    elif opcion == "8. Mitos del skincare":
+        st.markdown("""
+- ❌ El limón aclara la piel – Puede causar quemaduras.
+- ❌ Si arde, está funcionando – No, probablemente es irritante.
+- ❌ Solo las mujeres deben cuidarse la piel – ¡Todos debemos hacerlo!
+        """)
+
+    # --- Opción 9: Ayuda general ---
+    elif opcion == "9. Ayuda general":
+        st.markdown("""
+🆘 **¿No sabes por dónde empezar?**
+
+1. Realiza el test para conocer tu tipo de piel.
+2. Aprende más sobre tu tipo (opción 2).
+3. Arma tu rutina (opción 3).
+4. Busca productos (opción 4).
+5. Explora mitos, ingredientes y consejos.
+
+💡 Y si tienes dudas reales, consulta a un dermatólogo/a.
+        """)

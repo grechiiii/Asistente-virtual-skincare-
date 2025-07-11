@@ -5,10 +5,12 @@ import pandas as pd
 @st.cache_data
 def cargar_datos():
     return pd.read_csv("productos_chatbot_final.csv")
-
-df = cargar_datos()
-st.write("✅ Datos cargados:")
-st.write(df.head())
+try:
+    df = cargar_datos()
+    st.success("✅ CSV cargado con éxito")
+    st.write(df.head())  # Muestra primeras filas para confirmar
+except Exception as e:
+    st.error(f"❌ Error al cargar el CSV: {e}")
 
 # --- Inicializar variables en session_state ---
 if "tipo_piel" not in st.session_state:

@@ -1,3 +1,15 @@
+st.title("🔍 Diagnóstico de carga")
+
+try:
+    df = pd.read_csv("productos_chatbot_final.csv")
+    st.success("✅ CSV cargado correctamente.")
+    st.dataframe(df.head())
+except Exception as e:
+    st.error("❌ Error al cargar el CSV:")
+    st.text(e)
+    st.stop()
+
+
 import streamlit as st
 import pandas as pd
 
